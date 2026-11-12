@@ -1,0 +1,39 @@
+# world
+s:Ge/World/Material = "Vacuum"
+d:Ge/World/HLX = 1.0 m
+d:Ge/World/HLY = 1.0 m
+d:Ge/World/HLZ = 1.0 m
+b:Ge/World/Invisible = "True"
+
+# water phantom: 4 mm thick, starting at z = 0
+s:Ge/Water/Type = "TsBox"
+s:Ge/Water/Parent = "World"
+s:Ge/Water/Material = "G4_WATER"
+# 8 cm x 6 cm x 4 mm phantom
+d:Ge/Water/HLX = 4.0 cm
+d:Ge/Water/HLY = 3.0 cm
+d:Ge/Water/HLZ = 0.2 cm
+d:Ge/Water/TransZ = 0.2 cm
+
+# divide phantom along beam direction
+i:Ge/Water/ZBins = 400
+# divide beam in transverse direction
+# each voxel will be x: 1mm, y: 1mm, z: 0.01mm
+#i:Ge/Water/XBins = 80
+#i:Ge/Water/YBins = 60
+# Read the LLO phase-space file
+s:So/PoPLaRgaussian/Type = "PhaseSpace"
+s:So/PoPLaRgaussian/Component = "World"
+s:So/PoPLaRgaussian/PhaseSpaceFileName = "dat_ascii_files/PoPLaR-gaussian_8MeV"
+
+# Score dose in water
+s:Sc/DepthDose/Quantity = "DoseToMedium"
+s:Sc/DepthDose/Component = "Water"
+s:Sc/DepthDose/IfOutputFileAlreadyExists = "Overwrite"
+b:Sc/DepthDose/OutputToConsole = "True"
+
+# Score energy deposited in water
+s:Sc/EnergyDeposit/Quantity = "EnergyDeposit"
+s:Sc/EnergyDeposit/Component = "Water"
+s:Sc/EnergyDeposit/IfOutputFileAlreadyExists = "Overwrite"
+b:Sc/EnergyDeposit/OutputToConsole = "True"

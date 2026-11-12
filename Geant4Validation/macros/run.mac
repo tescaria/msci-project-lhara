@@ -1,0 +1,10 @@
+# Initialise simulation
+/run/initialize
+
+# Print information about the run
+/run/verbose 1
+/event/verbose 0
+/tracking/verbose 0
+
+# Simulate 10 protons initially
+/run/beamOn 6051

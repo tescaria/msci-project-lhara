@@ -1,0 +1,17 @@
+# logs
+logs/
+
+# generated plots
+plots/
+
+# xyz dose csv outputs
+dose_energy_csv_xyz/
+
+# Geant4 build directory
+Geant4Validation/build/
+
+# temporary files
+*.log
+*.tmp
+*~
+.DS_Store

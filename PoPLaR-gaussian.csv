@@ -1,0 +1,21 @@
+Stage,Section,Element,Type,Parameter,Value,Unit,Comment
+0,Facility,Global,Name,Name,PoPLaR,,
+0,Facility,Global,Reference particle,Kinetic energy,8,MeV,
+0,Facility,Global,Vacuum chamber,Mother volume radius,0.5,m,
+1,Source,Source,Gaussian,SourceMode,1,,Gaussian kinetic energy
+1,Source,Source,Gaussian,SigmaX,0.000004,m,"Gaussian width, x"
+1,Source,Source,Gaussian,SigmaY,0.000004,m,"Gaussian width, y"
+1,Source,Source,Gaussian,MeanEnergy,8,MeV,Mean of Gaussian kinetic energy
+1,Source,Source,Gaussian,SigmaEnergy,0.3,MeV,Sigma of Gaussian kinetic energy
+1,Source,Source,Gaussian,MinCTheta,0.999,,Minimum theta for flat cos theta
+1,Capture,Drift,,Length,0.093,m,
+1,Capture,Aperture,Circular,Radius,0.01,m,
+1,Capture,Fquad,,Length,0.04,m,
+1,Capture,Fquad,,Strength,150,T/m,
+1,Capture,Aperture,Circular,Radius,0.01,m,
+1,Capture,Drift,,Length,0.093,m,
+1,Capture,Aperture,Circular,Radius,0.01,m,
+1,Capture,Dquad,,Length,0.02,m,
+1,Capture,Dquad,,Strength,150,T/m,
+1,Capture,Aperture,Circular,Radius,0.01,m,
+1,Capture,Drift,,Length,0.729,m,
