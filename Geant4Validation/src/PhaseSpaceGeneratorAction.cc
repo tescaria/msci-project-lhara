@@ -11,8 +11,11 @@
 #include <cmath>
 #include <stdexcept>
 
-// constructor: initialise the generator
-PhaseSpaceGeneratorAction::PhaseSpaceGeneratorAction()
+// constructor: initialise the generator*
+PhaseSpaceGeneratorAction::PhaseSpaceGeneratorAction(
+    SimulationConfig& config)
+    : fConfig(config),
+      fMessenger(this, "/source/", "Source configuration")
 {
     // create particle gun - one primary particle per call to GeneratePrimaryVertex()
     particleGun = new G4ParticleGun(1);
@@ -20,14 +23,12 @@ PhaseSpaceGeneratorAction::PhaseSpaceGeneratorAction()
     // define particle type as proton
     particleGun->SetParticleDefinition(G4Proton::ProtonDefinition());
 
-    // open phase-space file
-    inputFile.open("phase_space/beam8MeV.phsp");
-
-    if (!inputFile.is_open()) {
-        throw std::runtime_error(
-            "Could not open phase-space file"
-        );
-    }
+    // define phase-space input file through macro
+    fMessenger.DeclareProperty(
+        "phaseSpaceFile",
+        fConfig.phaseSpaceFile,
+        "Input phase-space file"
+    );
 }
 
 // destructor: clean up
@@ -35,13 +36,29 @@ PhaseSpaceGeneratorAction::~PhaseSpaceGeneratorAction()
 {
     // release memory allocated with new and close the phase-space file
     delete particleGun;
-    inputFile.close();
+
+    if (inputFile.is_open()) {
+        inputFile.close();
+    }
 }
 
 // function called at the beginning of each event to generate the primary particle(s)
 void PhaseSpaceGeneratorAction::GeneratePrimaries(
     G4Event* event)
 {
+    // open phase-space file when the first primary particle is generated
+    if (!inputFile.is_open()) {
+
+        inputFile.open(fConfig.phaseSpaceFile);
+
+        if (!inputFile.is_open()) {
+            throw std::runtime_error(
+                "Could not open phase-space file: " +
+                fConfig.phaseSpaceFile
+            );
+        }
+    }
+
     G4double x, y, z;
     G4double u, v, energy;
     G4double weight;
@@ -61,7 +78,7 @@ void PhaseSpaceGeneratorAction::GeneratePrimaries(
         );
     }
 
-    // reconstruc the longitudinal direction cosine
+    // reconstruct the longitudinal direction cosine
     G4double w = std::sqrt(1.0 - u*u - v*v);
 
     if (negativeW == 1) {
@@ -79,11 +96,13 @@ void PhaseSpaceGeneratorAction::GeneratePrimaries(
     // construct the direction vector and normalise it to unit length
     G4ThreeVector direction(u, v, w);
     direction = direction.unit();
+
     // set the particle properties
     particleGun->SetParticlePosition(position);
     particleGun->SetParticleMomentumDirection(direction);
     particleGun->SetParticleEnergy(energy * MeV);
     particleGun->SetParticleWeight(weight);
+
     // generate primary vertex (starting point of a primary particle in an event)
     particleGun->GeneratePrimaryVertex(event);
 }

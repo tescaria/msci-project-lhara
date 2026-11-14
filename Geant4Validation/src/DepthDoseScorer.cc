@@ -3,18 +3,24 @@
 #include "G4Step.hh"
 #include "G4VPhysicalVolume.hh"
 #include "G4SystemOfUnits.hh"
-#include "G4NistManager.hh"
 #include "G4Material.hh"
 #include "G4VTouchable.hh"
+#include "G4LogicalVolumeStore.hh"
+#include "G4Box.hh"
 
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 
-// constructor: initialises all 400 array elements to zero
-DepthDoseScorer::DepthDoseScorer()
+// constructor: initialises all nBins array elements to zero
+DepthDoseScorer::DepthDoseScorer(SimulationConfig& config)
+    : fConfig(config),
+      fMessenger(this, "/scoring/", "Scoring configuration")
 {
-    energyDeposit.fill(0.0);
+    energyDeposit.assign(fConfig.nBins, 0.0);
+
+    // define output file through macro
+    fMessenger.DeclareProperty("outputFile", fConfig.outputFile, "Output dose filename");
 }
 
 void DepthDoseScorer::UserSteppingAction(const G4Step* step)
@@ -42,7 +48,7 @@ void DepthDoseScorer::UserSteppingAction(const G4Step* step)
     // Get the depth bin from the Z replica copy number
     G4int bin = touchable->GetReplicaNumber(0);
 
-    if (bin < 0 || bin >= nBins) {
+    if (bin < 0 || bin >= fConfig.nBins) {
         return;
     }
 
@@ -55,34 +61,56 @@ void DepthDoseScorer::UserSteppingAction(const G4Step* step)
 
 void DepthDoseScorer::WriteOutput() const
 {
-    std::ofstream output("depth_dose.csv");
+    std::ofstream output(fConfig.outputFile);
 
     if (!output.is_open()) {
-        G4cerr << "Could not create depth_dose.csv" << G4endl;
+        G4cerr << "Could not create " << fConfig.outputFile << G4endl;
         return;
     }
 
-    auto water = G4NistManager::Instance()
-                     ->FindOrBuildMaterial("G4_WATER");
+    // Retrieve the ZDivision logical volume
+    auto logicalVolumes =
+        G4LogicalVolumeStore::GetInstance();
 
-    G4double density = water->GetDensity();
+    auto logicZ = logicalVolumes->GetVolume("ZDivision");
 
-    // Volume and mass of each depth bin
+    if (!logicZ) {
+        G4cerr << "Could not find ZDivision logical volume"
+               << G4endl;
+        return;
+    }
+
+    // Retrieve the actual geometry and material
+    auto solid = dynamic_cast<G4Box*>(logicZ->GetSolid());
+
+    if (!solid) {
+        G4cerr << "ZDivision is not a G4Box" << G4endl;
+        return;
+    }
+
+    auto material = logicZ->GetMaterial();
+
+    G4double density = material->GetDensity();
+
+    // Calculate bin dimensions
+    G4double binWidth = 2.0 * solid->GetZHalfLength();
+
     G4double sliceVolume =
-        8.0 * cm * 6.0 * cm * 0.01 * mm;
+        (2.0 * solid->GetXHalfLength()) *
+        (2.0 * solid->GetYHalfLength()) *
+        binWidth;
 
     G4double sliceMass = density * sliceVolume;
 
     output << "Depth_mm,EnergyDeposit_MeV,Dose_Gy\n";
     output << std::scientific << std::setprecision(8);
 
-    for (G4int i = 0; i < nBins; ++i) {
+    for (G4int i = 0; i < fConfig.nBins; ++i) {
 
-        G4double depth = (i + 0.5) * 0.01 * mm;
+        G4double depth = (i + 0.5) * binWidth;
 
         G4double edepMeV = energyDeposit[i] / MeV;
 
-        // dividing by sliceMass gives dose in MeV/g, dividing by gray converts to Gy
         G4double doseGy =
             (energyDeposit[i] / sliceMass) / gray;
 
@@ -93,6 +121,6 @@ void DepthDoseScorer::WriteOutput() const
 
     output.close();
 
-    G4cout << "Depth-dose data written to depth_dose.csv"
-           << G4endl;
+    G4cout << "Depth-dose data written to "
+       << fConfig.outputFile << G4endl;;
 }

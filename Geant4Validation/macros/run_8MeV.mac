@@ -1,0 +1,23 @@
+# Source configuration
+/source/phaseSpaceFile phase_space/beam8MeV.phsp
+
+# Phantom configuration
+/phantom/sizeX 80 mm
+/phantom/sizeY 60 mm
+/phantom/sizeZ 4 mm
+/phantom/material G4_WATER
+/phantom/nBins 400
+
+# Output configuration
+/scoring/outputFile dose_8MeV.csv
+
+# Initialise simulation
+/run/initialize
+
+# Print information about the run
+/run/verbose 1
+/event/verbose 0
+/tracking/verbose 0
+
+# Run simulation
+/run/beamOn 6050

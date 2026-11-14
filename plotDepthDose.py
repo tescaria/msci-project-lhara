@@ -179,25 +179,25 @@ def main():
     
     # dose plot
     data_paths = [
-       "dose_energy_csv/DepthDose4MeV.csv",
-       "dose_energy_csv/DepthDose8MeV.csv",
-       "dose_energy_csv/DepthDose16MeV.csv"
+       "dose_energy_csv/topas/DepthDose4MeV.csv",
+       "dose_energy_csv/topas/DepthDose8MeV.csv",
+       "dose_energy_csv/topas/DepthDose16MeV.csv"
        ]
     output_path = "DepthDoseComparison.png"
     #plot_multiple_energy_dose(data_paths, labels, output_path)
 
     # energy deposition plots
     energy_data_paths = [
-       "dose_energy_csv/EnergyDeposit4MeV.csv",
-       "dose_energy_csv/EnergyDeposit8MeV.csv",
-       "dose_energy_csv/EnergyDeposit16MeV.csv"
+       "dose_energy_csv/topas/EnergyDeposit4MeV.csv",
+       "dose_energy_csv/topas/EnergyDeposit8MeV.csv",
+       "dose_energy_csv/topas/EnergyDeposit16MeV.csv"
        ]
     energy_output_path = "EnergyDepositComparison.png"
     #plot_multiple_energy_deposit(energy_data_paths, labels, energy_output_path)
 
     #plot_dose_xy("dose_energy_csv_xyz/DepthDose4MeV.csv", depth_mm=0.215, output_path="DoseXY4MeV_0.215mm.png")
     #plot_depth_dose_g4("dose_energy_csv/geant4Validation/depth_dose.csv", output_path="plots/DepthDoseG4.png")
-    plot_dose_topas_g4("dose_energy_csv/DepthDose8MeV.csv", "dose_energy_csv/geant4Validation/depth_dose.csv", output_path="plots/DepthDoseTOPAS_G4.png")
+    plot_dose_topas_g4("dose_energy_csv/topas/DepthDose8MeV.csv", "dose_energy_csv/geant4Validation/dose_8MeV.csv", output_path="plots/DepthDoseTOPAS_G4_v2.png")
 
 
 if __name__ == "__main__":

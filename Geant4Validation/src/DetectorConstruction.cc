@@ -9,49 +9,84 @@
 #include "G4VisAttributes.hh"
 #include "G4Colour.hh"
 
+DetectorConstruction::DetectorConstruction(SimulationConfig& config)
+    : G4VUserDetectorConstruction(),
+      fConfig(config),
+      fMessenger(this, "/phantom/", "Phantom configuration")
+{
+    fMessenger.DeclarePropertyWithUnit(
+        "sizeX", "mm", fConfig.sizeX, "Phantom X dimension"
+    );
+
+    fMessenger.DeclarePropertyWithUnit(
+        "sizeY", "mm", fConfig.sizeY, "Phantom Y dimension"
+    );
+
+    fMessenger.DeclarePropertyWithUnit(
+        "sizeZ", "mm", fConfig.sizeZ, "Phantom Z dimension"
+    );
+
+    fMessenger.DeclareProperty(
+        "material", fConfig.material, "Phantom material"
+    );
+
+    fMessenger.DeclareProperty(
+        "nBins", fConfig.nBins, "Number of depth bins"
+    );
+}
+
+
 G4VPhysicalVolume* DetectorConstruction::Construct()
 {
     // --- Define materials ---
-    // geant4 material manager 
     auto nist = G4NistManager::Instance();
 
     auto vacuum = nist->FindOrBuildMaterial("G4_Galactic");
-    auto water = nist->FindOrBuildMaterial("G4_WATER");
+    auto material = nist->FindOrBuildMaterial(fConfig.material);
 
-    // World: 2 m x 2 m x 2 m - g4box takes half-lenghts
-    auto solidWorld = new G4Box("World", 1.0*m, 1.0*m, 1.0*m);
-    // create logical volume by combining geometric solid, material, name
-    auto logicWorld = new G4LogicalVolume(solidWorld, vacuum, "World");
+    // Convert full dimensions to half-lengths
+    G4double halfX = fConfig.sizeX / 2.0;
+    G4double halfY = fConfig.sizeY / 2.0;
+    G4double halfZ = fConfig.sizeZ / 2.0;
 
-    auto physWorld = new G4PVPlacement(
-        nullptr, // no rotation
-        G4ThreeVector(), // at (0,0,0)
-        logicWorld, // logical volume being placed
-        "World",
-        nullptr, // no parent (this is the volume)
-        false,
-        0,
-        true // check for overlaps
+    // World: 2 m x 2 m x 2 m
+    auto solidWorld = new G4Box(
+        "World", 1.0*m, 1.0*m, 1.0*m
     );
 
-    // Water phantom envelope: 8 cm x 6 cm x 4 mm
+    auto logicWorld = new G4LogicalVolume(
+        solidWorld, vacuum, "World"
+    );
+
+    auto physWorld = new G4PVPlacement(
+        nullptr,
+        G4ThreeVector(),
+        logicWorld,
+        "World",
+        nullptr,
+        false,
+        0,
+        true
+    );
+
+    // --- Water phantom ---
     auto solidWater = new G4Box(
         "Water",
-        4.0*cm,
-        3.0*cm,
-        0.2*cm
+        halfX,
+        halfY,
+        halfZ
     );
 
     auto logicWater = new G4LogicalVolume(
         solidWater,
-        water,
+        material,
         "Water"
     );
 
-    // Place phantom with its entrance face at z = 0
+    // Place phantom with entrance face at z = 0
     new G4PVPlacement(
         nullptr,
-        G4ThreeVector(0., 0., 0.2*cm),
+        G4ThreeVector(0., 0., halfZ),
         logicWater,
         "Water",
         logicWorld,
@@ -60,17 +95,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         true
     );
 
-    // X division: 1 replica
+    // --- X division: 1 replica ---
     auto solidX = new G4Box(
         "XDivision",
-        4.0*cm,
-        3.0*cm,
-        0.2*cm
+        halfX,
+        halfY,
+        halfZ
     );
 
     auto logicX = new G4LogicalVolume(
         solidX,
-        water,
+        material,
         "XDivision"
     );
 
@@ -80,20 +115,20 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         logicWater,
         kXAxis,
         1,
-        8.0*cm
+        fConfig.sizeX
     );
 
-    // Y division: 1 replica
+    // --- Y division: 1 replica ---
     auto solidY = new G4Box(
         "YDivision",
-        4.0*cm,
-        3.0*cm,
-        0.2*cm
+        halfX,
+        halfY,
+        halfZ
     );
 
     auto logicY = new G4LogicalVolume(
         solidY,
-        water,
+        material,
         "YDivision"
     );
 
@@ -103,20 +138,22 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         logicX,
         kYAxis,
         1,
-        6.0*cm
+        fConfig.sizeY
     );
 
-    // Z division: 400 replicas, each 0.01 mm thick
+    // --- Z division: 400 replicas ---
+    G4double binWidth = fConfig.sizeZ / fConfig.nBins;
+
     auto solidZ = new G4Box(
         "ZDivision",
-        4.0*cm,
-        3.0*cm,
-        0.005*mm
+        halfX,
+        halfY,
+        binWidth / 2.0
     );
 
     auto logicZ = new G4LogicalVolume(
         solidZ,
-        water,
+        material,
         "ZDivision"
     );
 
@@ -125,13 +162,14 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         logicZ,
         logicY,
         kZAxis,
-        400,
-        0.01*mm
+        fConfig.nBins,
+        binWidth
     );
 
-    // Visualisation
-    // make world invisible in visualisation
-    logicWorld->SetVisAttributes(G4VisAttributes::GetInvisible());
+    // --- Visualisation ---
+    logicWorld->SetVisAttributes(
+        G4VisAttributes::GetInvisible()
+    );
 
     auto waterVis = new G4VisAttributes(
         G4Colour(0.2, 0.5, 1.0)

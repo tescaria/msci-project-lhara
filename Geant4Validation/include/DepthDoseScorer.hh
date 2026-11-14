@@ -3,15 +3,17 @@
 
 #include "G4UserSteppingAction.hh"
 #include "G4Types.hh"
+#include "SimulationConfig.hh"
+#include "G4GenericMessenger.hh"
 
-#include <array>
+#include <vector>
 
 class G4Step;
 
 class DepthDoseScorer : public G4UserSteppingAction
 {
 public:
-    DepthDoseScorer();
+    DepthDoseScorer(SimulationConfig& config);
     ~DepthDoseScorer() override = default;
 
     void UserSteppingAction(const G4Step* step) override;
@@ -19,9 +21,10 @@ public:
     void WriteOutput() const;
 
 private:
-    static constexpr G4int nBins = 400;
 
-    std::array<G4double, nBins> energyDeposit;
+    SimulationConfig& fConfig;
+    G4GenericMessenger fMessenger;
+    std::vector<G4double> energyDeposit;
 };
 
 #endif
