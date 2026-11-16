@@ -8,16 +8,20 @@
 /phantom/material G4_WATER
 /phantom/nBins 400
 
+# Physics configuration
+/physics/emPhysics DNA_option6
+
 # Output configuration
-/scoring/outputFile dose_8MeV.csv
+/scoring/outputFile dose100ev_8MeV_opt6.csv
 
 # Initialise simulation
 /run/initialize
 
 # Print information about the run
 /run/verbose 1
+/run/printProgress 1
 /event/verbose 0
 /tracking/verbose 0
 
 # Run simulation
-/run/beamOn 6050
+/run/beamOn 100

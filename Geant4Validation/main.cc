@@ -8,33 +8,40 @@
 #include "DetectorConstruction.hh"
 #include "PhaseSpaceGeneratorAction.hh"
 #include "DepthDoseScorer.hh"
+#include "PhysicsConfiguration.hh"
+
 
 int main(int argc, char** argv)
 {
-    // Create shared simulation configuration
+    // create shared simulation configuration
     SimulationConfig config;
 
-    // Create run manager
+    // create run manager
     auto runManager = new G4RunManager();
 
-    // Detector geometry
+    // detector geometry and configuration messenger
     runManager->SetUserInitialization(new DetectorConstruction(config));
 
-    // Physics list
+    // create reference physics list
     G4PhysListFactory factory;
     auto physics = factory.GetReferencePhysList("QGSP_BIC_HP");
+    // register physics list 
     runManager->SetUserInitialization(physics);
 
-    // Primary particle generator
+    // physics configuration messenger
+    PhysicsConfiguration physicsConfig(config, physics);
+
+    // primary particle generator
     runManager->SetUserAction(new PhaseSpaceGeneratorAction(config));
 
+    // scorer
     auto scorer = new DepthDoseScorer(config);
     runManager->SetUserAction(scorer);
 
     // UI manager
     auto ui = G4UImanager::GetUIpointer();
 
-    // Execute macro file if provided as command line argument
+    // execute macro configuration commands
     if (argc > 1) {
         G4String command = "/control/execute ";
         G4String macro = argv[1];

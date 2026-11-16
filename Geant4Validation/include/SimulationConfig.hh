@@ -20,6 +20,9 @@ struct SimulationConfig
     // Source configuration
     G4String phaseSpaceFile = "phase_space/beam8MeV.phsp";
 
+    // Physics configuration
+    G4String emPhysics = "default";
+
     // Output configuration
     G4String outputFile = "depth_dose.csv";
 };
